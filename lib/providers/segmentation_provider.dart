@@ -15,6 +15,7 @@ class SegmentationProvider with ChangeNotifier{
     Uint8List? memoryResult;
     InferenceIsolate? inferenceIsolate;
     bool processing = false;
+    int totaltime = 0;
  
     void setFile(File f){
         fileImage = f;
@@ -31,8 +32,11 @@ class SegmentationProvider with ChangeNotifier{
         await inferenceIsolate!.start();
 
         final interpreterOptions = InterpreterOptions();
+        interpreterOptions.threads = 4;
+      
         if(Platform.isAndroid){
-            // interpreterOptions.addDelegate(XNNPackDelegate());
+            interpreterOptions.addDelegate(XNNPackDelegate());
+            interpreterOptions.useNnApiForAndroid = true;
         }
 
         if(Platform.isIOS){
@@ -75,6 +79,8 @@ class SegmentationProvider with ChangeNotifier{
         final akhir = DateTime.now();
         final compare = akhir.difference(awal);
         print("lama inference luar ${compare.inMilliseconds}");
+        totaltime = compare.inMilliseconds;
+
         processing = false;
         notifyListeners();
     }
@@ -152,7 +158,8 @@ class InferenceIsolate{
                   imageInput.width,
                   (x){
                       final pixel = imageInput.getPixel(x, y);
-                      return [pixel.r / 255, pixel.g / 255, pixel.b / 255];
+                      final rgb = [pixel.r / 127.5, pixel.g / 127.5, pixel.b / 127.5];
+                      return [rgb[0]-1.0, rgb[1] - 1.0, rgb[2] -1.0 ];
                       // return [pixel.r /255, pixel.g / 255, pixel.b / 255];
                   }
               ));
@@ -179,10 +186,10 @@ class InferenceIsolate{
 
             for(var y = 0; y<result.shape[0]; y++){
                 for(var x=0; x<result.shape[1]; x++){
-                  img.Color c = img.ColorRgb8(255,255,255); 
+                  img.Color c = imageInput.getPixel(x, y);  
                   final confidence = result[y][x][0]  ;
-                  if( confidence >= 0.001){
-                    c = imageInput.getPixel(x, y); 
+                  if( confidence < 0.01){ 
+                    c = img.ColorRgb8(255, 255, 255); 
                   }
                   temp.setPixel(x, y, c);
                 }

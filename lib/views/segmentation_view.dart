@@ -43,11 +43,23 @@ class SegmentationView extends StatelessWidget {
                         builder: (context) => ItemBottomSheet(provider: provider));
                   }, child: const Text('Choose picture')),
 
-                  const SizedBox(height: 20,),
+                  const SizedBox(height: 10,),
 
+                  const Text('Result Segmentation'),
                   Consumer<SegmentationProvider>(
                     builder: (c, prov, w)=> prov.processing ? const CircularProgressIndicator() : 
-                    (prov.memoryResult == null ? const SizedBox() : Image.memory(prov.memoryResult!))
+                    (prov.memoryResult == null ? const SizedBox() : 
+                    Stack(
+                      children: [
+                        Container(
+                          decoration: BoxDecoration(
+                            border: Border.all(color: Colors.grey)
+                          ),
+                          child: Image.memory(prov.memoryResult!, height: 250,)
+                        ),
+                        Text("Inference time : ${prov.totaltime} ms")
+                      ],
+                    ))
                   )
               ],
             ),
@@ -71,7 +83,7 @@ class ImagePreview extends StatelessWidget {
           return Stack(
             children: [
               prov.fileImage == null ? Image.asset(Assets.assetsImagesTakepicture) :
-                 Image.file(prov.fileImage!, height: 350,),
+                 Image.file(prov.fileImage!, height: 250,),
 
             ],
           );
